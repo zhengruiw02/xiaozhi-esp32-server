@@ -18,6 +18,7 @@ from core.handle.receiveAudioHandle import handleAudioMessage
 from config.private_config import PrivateConfig
 from core.auth import AuthMiddleware, AuthenticationError
 from core.utils.auth_code_gen import AuthCodeGenerator
+from core.utils.chat_history import ChatHistory
 
 TAG = __name__
 
@@ -66,6 +67,10 @@ class ConnectionHandler:
         # llm相关变量
         self.llm_finish_task = False
         self.dialogue = Dialogue()
+
+        # 聊天记录相关
+        self.chat_history = ChatHistory()
+        self.chat_history.load_chat_history(self.dialogue)
 
         # tts相关变量
         self.tts_first_text = None
@@ -263,6 +268,10 @@ class ConnectionHandler:
 
         self.llm_finish_task = True
         self.dialogue.put(Message(role="assistant", content="".join(response_message)))
+
+        # 更新对话聊天记录
+        self.chat_history.update_chat_history(query, response_message)
+        
         self.logger.bind(tag=TAG).debug(json.dumps(self.dialogue.get_llm_dialogue(), indent=4, ensure_ascii=False))
         return True
 
